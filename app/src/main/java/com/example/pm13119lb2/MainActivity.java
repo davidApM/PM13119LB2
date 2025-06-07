@@ -1,17 +1,28 @@
 package com.example.pm13119lb2;
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.InputType;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Switch;
+import android.widget.TextView;
+import android.widget.TimePicker;
+
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,7 +33,11 @@ import androidx.core.view.WindowInsetsCompat;
 import
         com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
+
 public class MainActivity extends AppCompatActivity {
     // Propiedades personalizadas de la clase MainActivity
     private static final int PICK_IMAGE_REQUEST = 1;
@@ -58,6 +73,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        // Vinculamos componentes a la capa lógica
+        ImageButton imgbuttonfecha = findViewById(R.id.imgButtonFecha);
+        ImageButton imgbuttonhora = findViewById(R.id.imgButtonHora);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v,
                                                                             insets) -> {
             Insets systemBars =
@@ -74,10 +93,19 @@ public class MainActivity extends AppCompatActivity {
         CheckBox chkboxdesamodo =
                 findViewById(R.id.chboxDesactivacambiomodo);
         RadioGroup radioGroup = findViewById(R.id.radioGroup);
+
+
         // Manejo del evento onClick del elemento de tipo Switch
         swModo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Cambiando modo")
+                        .setMessage("Se cambiara el modo de la aplicación")
+                        .setPositiveButton("OK", null)
+                        .show();
+
                 boolean estado = ((Switch) view).isChecked();
                 if (estado){
 
@@ -90,16 +118,36 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
         // Manejo del evento onClick del elemento de tipo CheckBox
-        chkboxdesamodo.setOnClickListener(new View.OnClickListener() {@Override
-        public void onClick(View view) {
-            if (chkboxdesamodo.isChecked()){
-                swModo.setEnabled(false);
-            }else{
-                swModo.setEnabled(true);
+        chkboxdesamodo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Confirmar cambio de modo")
+                    .setMessage("Esta seguro que desea deshabilitar el cambio de modo")
+                    .setPositiveButton("Si", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            swModo.setEnabled(!chkboxdesamodo.isChecked());
+                        }
+                    })
+                    .setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            chkboxdesamodo.setChecked(!chkboxdesamodo.isChecked());
+                        }
+                    })
+                    .show();
+
+                /*if(chkboxdesamodo.isChecked()){
+                    swModo.setEnabled(false);
+                }else{
+                    swModo.setEnabled(true);
+                }*/
             }
-        }
         });
+
         // Manejo del evento onCheckedChanged que representa una acción equivalente a onClick
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -108,9 +156,35 @@ public class MainActivity extends AppCompatActivity {
                     RadioButton radioButtonSelec = findViewById(checkedId);
                     int indexbutton = radioGroup.indexOfChild(radioButtonSelec);
                     if(indexbutton==1){
+
+                        LayoutInflater inflater = getLayoutInflater();
+                        View dialogView = inflater.inflate(R.layout.dialogo_personalizado, null);
+                        EditText razonocultar = dialogView.findViewById(R.id.edtJustificacion);
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                        builder.setView(dialogView);
+                        builder.setTitle("Venta - Razón para ocultar ");
+                        builder.setPositiveButton("Registrar", new
+                                DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        String razon = razonocultar.getText().toString();
+                                        tvestadomodo.setText(razon);
+                                    }
+                                });
+                        builder.setNegativeButton("Cancelar", new
+                                DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int
+                                            i) {
+                                        tvestadomodo.setText("");
+                                    }
+                                });
+                        builder.show();
                         imgviewFoto.setVisibility(View.INVISIBLE);
                     }else{
                         imgviewFoto.setVisibility(View.VISIBLE);
+                        tvestadomodo.setText("");
                     }
                 }
             }
@@ -120,10 +194,29 @@ public class MainActivity extends AppCompatActivity {
         lstdepartamentos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                String elementoseleccionado = items.get(position);
+                TextView itemselected = (TextView) view;
+                AlertDialog.Builder builder = new
+                        AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("Ingrese el nuevo valor para el elemento seleccionado" );
+
+                final EditText nuevotexto = new EditText(MainActivity.this);
+                nuevotexto.setInputType(InputType.TYPE_CLASS_TEXT);
+                builder.setView(nuevotexto);
+                builder.setPositiveButton("Aceptar", new
+                        DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                String textonuevo = nuevotexto.getText().toString();
+                                itemselected.setText(textonuevo);
+                            }
+                        });
+                builder.setNegativeButton("Cancelar", null);
+                builder.show();
+
+               /* String elementoseleccionado = items.get(position);
                 View rooLayout;
                 rooLayout = findViewById(R.id.main);
-                Snackbar.make(rooLayout, "El elemento seleccionado es " + elementoseleccionado, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(rooLayout, "El elemento seleccionado es " + elementoseleccionado, Snackbar.LENGTH_SHORT).show();*/
             }
         });
 
@@ -135,8 +228,53 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Manejo del evento onClick para el elemento imgbuttonFecha
+        imgbuttonfecha.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int annio = LocalDate.now().getYear();
+                int mes = LocalDate.now().getMonthValue();
+                int dia = LocalDate.now().getDayOfMonth();
+                DatePickerDialog datePickerDialog = new
+                        DatePickerDialog(MainActivity.this,
+                        new DatePickerDialog.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(DatePicker view, int year, int
+                                    month, int dayOfMonth) {
+                                String fecha = dayOfMonth + "/" + (month +1) +
+                                        "/" + year;
+                                tvestadomodo.setText( "Fecha: " + fecha);
+                            }
+                        }, annio, mes-1, dia);
+                datePickerDialog.show();
+            }
+        });
+
+        // Manejo del evento onClick para el elemento imgbuttonHora
+        imgbuttonhora.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int hora = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)+1;
+                int minutos = Calendar.getInstance().get(Calendar.MINUTE)+1;
+                TimePickerDialog timePickerDialog = new
+                        TimePickerDialog(MainActivity.this,
+                        new TimePickerDialog.OnTimeSetListener() {
+                            @Override
+                            public void onTimeSet(TimePicker view, int hourOfDay,
+                                                  int minute) {String hora = hourOfDay + ":" +
+                                    String.format("%02d", minute);
+                                tvestadomodo.setText( "Hora : " + hora);
+                            }
+                        }, hora-1, minutos, true);
+                timePickerDialog.show();
+            }
+        });
+
+
+
+
         // Manejo del evento onClick del elemento de tipo CheckBox
-        chkboxdesamodo.setOnClickListener(new View.OnClickListener() {
+        /*chkboxdesamodo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (chkboxdesamodo.isChecked()){
@@ -145,10 +283,10 @@ public class MainActivity extends AppCompatActivity {
                     swModo.setEnabled(true);
                 }
             }
-        });
+        });*/
 
         // Manejo del evento onItemClick del elemento de tipo ListView
-        lstdepartamentos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        /*lstdepartamentos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 String elementoseleccionado = items.get(position);
@@ -156,7 +294,7 @@ public class MainActivity extends AppCompatActivity {
                 rooLayout = findViewById(R.id.main);
                 Snackbar.make(rooLayout, "El elemenot seleccionado es " + elementoseleccionado, Snackbar.LENGTH_SHORT).show();
             }
-        });
+        });*/
 
         // Manejo del evento onClick del elemento de tipo ImageView
         imgviewFoto.setOnClickListener(new View.OnClickListener() {
